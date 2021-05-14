@@ -1,7 +1,7 @@
 const uuid = require("uuid");
 const crypto = require("../crypto");
 const teamsController = require("./teams");
-const userDatabase = {};
+let userDatabase = {};
 //userId -> userData
 
 const registerUser = (userName, password) => {
@@ -14,6 +14,10 @@ const registerUser = (userName, password) => {
   };
 
   teamsController.bootstrapTeam(userId);
+};
+
+const cleanUpUsers = () => {
+  userDatabase = {};
 };
 
 const getUser = (userId) => {
@@ -31,11 +35,9 @@ const getUserIdFromUserName = (userName) => {
 };
 
 const checkUserCredentials = (userName, password, done) => {
-  console.log("Checking user credentials");
   //Check the credentials
   let user = getUserIdFromUserName(userName);
   if (user) {
-    console.log(user);
     crypto.comparePassword(password, user.password, done);
   } else {
     done("Missing user");
@@ -46,3 +48,4 @@ exports.registerUser = registerUser;
 exports.checkUserCredentials = checkUserCredentials;
 exports.getUser = getUser;
 exports.getUserIdFromUserName = getUserIdFromUserName;
+exports.cleanUpUsers = cleanUpUsers;

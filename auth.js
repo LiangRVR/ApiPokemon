@@ -9,7 +9,6 @@ module.exports = (passport) => {
   
   passport.use(
     new JwtStrategy(opts, (decoded, done) => {
-      console.log("Decode jwt", decoded);
       return done(null, decoded);
     })
   );

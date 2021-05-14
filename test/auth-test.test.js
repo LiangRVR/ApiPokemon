@@ -5,8 +5,15 @@ chai.use(chaiHttp);
 
 const app = require("../index").app;
 
+const usersController = require("../controllers/users");
+
+before((done) => {
+  usersController.registerUser("LRVR", "123456");
+  usersController.registerUser("LVDev", "654321");
+  done();
+});
+
 describe("Auth's Test Suit", () => {
-  
   it("Should return 400 when the data isn't provided", (done) => {
     //Expect valid login
     chai
@@ -50,3 +57,8 @@ describe("Auth's Test Suit", () => {
       });
   });
 });
+
+after((done)=>{
+  usersController.cleanUpUsers()
+  done()
+})

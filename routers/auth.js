@@ -4,8 +4,7 @@ const jwt = require("jsonwebtoken");
 
 //Import controllers
 const usersController = require("../controllers/users");
-usersController.registerUser("LRVR", "123456");
-usersController.registerUser("LVDev", "654321");
+
 
 //Routes
 router
