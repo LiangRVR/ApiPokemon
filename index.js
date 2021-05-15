@@ -1,8 +1,8 @@
 const express = require("express");
 
 //Routes
-const authRoutes = require("./routers/auth").router;
-const teamRoutes = require("./routers/teams").router;
+const authRoutes = require("./auth/auth.router").router;
+const teamRoutes = require("./teams/teams.router").router;
 
 const app = express();
 app.use(express.json());
@@ -17,7 +17,7 @@ app.use("/auth", authRoutes);
 app.use("/teams", teamRoutes);
 
 app.listen(port, () => {
-  console.log(`listening on port ${port}`);
+  console.log(`Server started at port ${port}`);
 });
 
 exports.app = app;
