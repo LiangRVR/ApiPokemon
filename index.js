@@ -1,14 +1,18 @@
 const express = require("express");
+const middlewares = require("./middlewares");
 
-//Routes
+//Routes's import 
 const authRoutes = require("./auth/auth.router").router;
 const teamRoutes = require("./teams/teams.router").router;
 
 const app = express();
-app.use(express.json());
+
+//Middlewares
+middlewares.setupMiddlewares(app);
 
 const port = 3000;
 
+//Routes
 app.get("/", (req, res) => {
   res.status(200).send("Hello World!");
 });
