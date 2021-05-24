@@ -8,15 +8,14 @@ const app = require("../../index").app;
 const usersController = require("../../auth/users.controller");
 const teamsController = require("../teams.controller");
 
-before((done) => {
-  usersController.registerUser("LRVR", "123456");
-  usersController.registerUser("LVDev", "654321");
-  done();
+beforeEach(async () => {
+  await usersController.registerUser("LRVR", "123456");
+  await usersController.registerUser("LVDev", "654321");
 });
 
-beforeEach((done) => {
-  teamsController.cleanUpTeam();
-  done();
+afterEach(async () => {
+  await teamsController.cleanUpTeam();
+  await usersController.cleanUpUsers();
 });
 
 describe("Teams's Test Suit", () => {
@@ -191,9 +190,69 @@ describe("Teams's Test Suit", () => {
           });
       });
   });
+
+  it("Should not be able to add pokemon if you have already 6", (done) => {
+    //Making the team
+    let team = [
+      { name: "Charizard" },
+      { name: "Blastoide" },
+      { name: "Bulbasaur" },
+      { name: "Charmander" },
+      { name: "Squirtle" },
+      { name: "Pidgey" },
+    ];
+    //Login an User
+    chai
+      .request(app)
+      .post("/auth/login")
+      .set("content-type", "application/json")
+      .send({ user: "LRVR", password: "123456" })
+      .end((err, res) => {
+        //Set the team
+        chai.assert.equal(res.statusCode, 200);
+        let token = res.body.token;
+        chai
+          .request(app)
+          .put("/teams")
+          .send({ team: team }) //sending the team
+          .set("Authorization", `JWT ${token}`)
+          .end((err, res) => {
+            // Check if LRVR have the team created before
+            chai
+              .request(app)
+              .get("/teams")
+              .set("Authorization", `JWT ${token}`)
+              .end((err, res) => {
+                /*
+                  Format:
+                    {
+                        trainer:"LRVR",
+                        team:[...PokemonsName]
+                    }
+                 */
+                chai.assert.equal(res.statusCode, 200);
+                chai.assert.equal(res.body.trainer, "LRVR");
+                chai.assert.equal(res.body.team.length, team.length);
+                for (let i = 0; i < team.length; i++) {
+                  chai.assert.equal(res.body.team[i].name, team[i].name);
+                }
+
+                //Try to add another pokemon
+                chai
+                  .request(app)
+                  .post("/teams/pokemons")
+                  .send({ name: "Pikachu" }) //sending the pokemon
+                  .set("Authorization", `JWT ${token}`)
+                  .end((err, res) => {
+                    chai.assert.equal(res.statusCode, 400);
+                    done();
+                  });
+              });
+          });
+      });
+  });
 });
 
-after((done) => {
-  usersController.cleanUpUsers();
-  done();
+after(async () => {
+  await usersController.cleanUpUsers();
 });

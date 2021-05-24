@@ -1,61 +1,80 @@
 const axios = require("axios").default;
 const teamsController = require("./teams.controller");
 const { getUser } = require("../auth/users.controller");
+const { to } = require("../tools/to");
 
-const getTeamFromUser = (req, res) => {
+const getTeamFromUser = async (req, res) => {
+  let user = await getUser(req.user.userId);
+  let [teamErr, team] = await to(
+    teamsController.getTeamOfUser(req.user.userId)
+  );
+  if (teamErr) {
+    return res.status(400).json({ message: teamErr });
+  }
   res.status(200).json({
-    trainer: getUser(req.user.userId).userName,
-    team: teamsController.getTeamOfUser(req.user.userId),
+    trainer: user.userName,
+    team: team,
   });
 };
 
-const setTeamToUser = (req, res) => {
-  teamsController.setTeam(req.user.userId, req.body.team);
+const setTeamToUser = async (req, res) => {
+  let [err, resp] = await to(
+    teamsController.setTeam(req.user.userId, req.body.team)
+  );
+  if (err) {
+    return res.status(400).json({ message: err });
+  }
   res.status(200).send();
 };
 
-const addPokemToTeam = (req, res) => {
+const addPokemToTeam = async (req, res) => {
   let pokemonName = req.body.name;
   //Calling to pokeapi
-  axios
-    .get(`https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`)
-    .then((response) => {
-      // handle success
+  let [pokeApiError, pokeApiResponse] = await to(
+    axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemonName.toLowerCase()}`)
+  );
 
-      let pokemon = {
-        name: pokemonName,
-        pokedexNumber: response.data.id,
-      };
-
-      teamsController.addPokemon(req.user.userId, pokemon);
-
-      res.status(201).json(pokemon);
-    })
-    .catch((error) => {
-      // handle error
-      res.status(400).send({ message: error });
-    })
-    .then(() => {
-      // always executed
-    });
-};
-
-const deletePokemonFromTeam = (req, res) => {
-  //Check if pokeid is correct
-  let oldTeamLength = teamsController.getTeamOfUser(req.user.userId).length;
-
-  if (req.params.pokeid > oldTeamLength - 1) {
-    res
-      .status(400)
-      .send({ message: `Index must be less or equal to ${oldTeamLength}` });
+  if (pokeApiError) {
+    return res.status(400).json({ messag: pokeApiError });
   }
 
+  let pokemon = {
+    name: pokemonName,
+    pokedexNumber: pokeApiResponse.data.id,
+  };
+
+  let [errorAdd, responseAdd] = await to(
+    teamsController.addPokemon(req.user.userId, pokemon)
+  );
+
+  if (errorAdd) {
+    return res.status(400).json({ message: "Already have 6 pokemon" });
+  }
+
+  res.status(201).json(pokemon);
+};
+
+const deletePokemonFromTeam = async (req, res) => {
   //Deleting the pokemon of the team
-  teamsController.deletePokemon(req.user.userId, req.params.pokeid);
+  let [delErr, resp] = await to(
+    teamsController.deletePokemon(req.user.userId, req.params.pokeid)
+  );
+  if (delErr) {
+    return res.status(400).json({ messag: delErr });
+  }
+
+  let user = await getUser(req.user.userId);
+  let [getTeamErr, team] = await to(
+    teamsController.getTeamOfUser(req.user.userId)
+  );
+
+  if (getTeamErr) {
+    return res.status(400).json({ messag: getTeamErr });
+  }
 
   let newUserTeam = {
-    trainer: getUser(req.user.userId).userName,
-    team: teamsController.getTeamOfUser(req.user.userId),
+    trainer: user.userName,
+    team: team,
   };
 
   res.status(200).json(newUserTeam);

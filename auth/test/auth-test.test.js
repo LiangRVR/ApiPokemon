@@ -7,10 +7,9 @@ const app = require("../../index").app;
 
 const usersController = require("../users.controller");
 
-before((done) => {
-  usersController.registerUser("LRVR", "123456");
-  usersController.registerUser("LVDev", "654321");
-  done();
+before(async () => {
+  await usersController.registerUser("LRVR", "123456");
+  await usersController.registerUser("LVDev", "654321");
 });
 
 describe("Auth's Test Suit", () => {
@@ -58,7 +57,6 @@ describe("Auth's Test Suit", () => {
   });
 });
 
-after((done)=>{
-  usersController.cleanUpUsers()
-  done()
-})
+after(async () => {
+  await usersController.cleanUpUsers();
+});
